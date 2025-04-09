@@ -6,17 +6,8 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const corsOptions =require ('./config/corsOptions')
-const path = require("path");
 
-
-const __dirname = path.resolve()
-
-app.use(express.static(path.join(__dirname, "/frontend/build")));
-app.get("*", (req, res) =>
-  res.sendFile(path.join(__dirname, "/frontend/build/index.html"))
-)
-
-
+app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
@@ -48,7 +39,6 @@ app.use("/api/admin", require("./routes/adminRoute"));
 app.use("/api/disaster", require("./routes/disasterRoute"));
 
 app.use("/api/upload", require("./routes/uploadRoute"));
-
 
 
 const PORT = process.env.PORT || 4000;
