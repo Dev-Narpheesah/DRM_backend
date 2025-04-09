@@ -22,7 +22,7 @@ mongoose
 // Middleware
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
+    origin: ["http://localhost:5173","https://drm-frontend-rust.vercel.app/"],
     credentials: true,
     optionsSuccessStatus: 200,
     methods: "GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS",
