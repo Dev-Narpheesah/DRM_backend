@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const corsOptions =require ('./config/corsOptions')
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -21,12 +22,13 @@ mongoose
 
 // Middleware
 app.use(
-  cors({
-    origin: ["http://localhost:5173","https://drm-frontend-rust.vercel.app/"],
-    credentials: true,
-    optionsSuccessStatus: 200,
-    methods: "GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS",
-  })
+  cors(corsOptions
+
+    // origin: ["http://localhost:5173","https://drm-frontend-rust.vercel.app/"],
+    // credentials: true,
+    // optionsSuccessStatus: 200,
+    // methods: "GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS",
+  )
 );
 app.use(bodyParser.json());
 
