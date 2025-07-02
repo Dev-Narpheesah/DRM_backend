@@ -23,11 +23,6 @@ mongoose
 // Middleware
 app.use(
   cors(corsOptions
-
-    // origin: ["http://localhost:5173","https://drm-frontend-rust.vercel.app/"],
-    // credentials: true,
-    // optionsSuccessStatus: 200,
-    // methods: "GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS",
   )
 );
 app.use(bodyParser.json());
@@ -39,6 +34,7 @@ app.use("/api/admin", require("./routes/adminRoute"));
 app.use("/api/disaster", require("./routes/disasterRoute"));
 
 app.use("/api/upload", require("./routes/uploadRoute"));
+
 
 
 const PORT = process.env.PORT || 4000;

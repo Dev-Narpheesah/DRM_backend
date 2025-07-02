@@ -72,6 +72,15 @@ const getAllUsers = async (req, res) => {
   }
 };
 
+const getUser = async (req, res) => {
+  const user = await UserInfo.findById(req.params.id);
+
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+  res.status(200).json(user);
+};
+
 const logoutUser = async (req, res) => {
   try {
     res.status(200).json({ message: 'User logged out successfully. Please remove the token from client storage.' });
@@ -84,6 +93,7 @@ const logoutUser = async (req, res) => {
 module.exports = {
   registerUser,
   loginUser,
+  getUser,
   getAllUsers,
   logoutUser,
 };

@@ -1,9 +1,10 @@
-const asyncHandler = require("express-async-handler");
-const User = require("../models/UserModel");
-const cloudinary = require("cloudinary").v2;
-const streamifier = require("streamifier");
-const multer = require("multer");
-
+const asyncHandler = require('express-async-handler');
+const User = require('../models/UserModel');
+const Comment = require('../models/CommentModel');
+const cloudinary = require('cloudinary').v2;
+const streamifier = require('streamifier');
+const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -24,65 +25,159 @@ const uploadImageToCloudinary = (fileBuffer) => {
   });
 };
 
-
-const registerUser = asyncHandler(async (req, res) => {
-  const { email, phone, disasterType, location, report } = req.body;
-
- 
-  if (!email || !phone || !disasterType || !location || !report || !req.file) {
-    return res.status(400).json({ message: "All fields are required" });
+// Authentication Middleware
+const authenticate = asyncHandler(async (req, res, next) => {
+  const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    res.status(401);
+    throw new Error('Authentication required');
   }
 
-  let imageUrl = "";
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    res.status(401);
+    throw new Error('Invalid or expired token');
+  }
+});
+
+// Get Current User
+const getCurrentUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user.id).select('-password');
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+  res.status(200).json({ id: user._id, email: user.email, isAdmin: user.isAdmin });
+});
+
+// Login User
+// const loginUser = asyncHandler(async (req, res) => {
+//   const { email, password } = req.body;
+//   if (!email || !password) {
+//     res.status(400);
+//     throw new Error('Email and password are required');
+//   }
+
+//   const user = await User.findOne({ email });
+//   if (!user || !(await user.matchPassword(password))) {
+//     res.status(401);
+//     throw new Error('Invalid credentials');
+//   }
+
+//   const token = jwt.sign({ id: user._id, name: user.email, isAdmin: user.isAdmin }, process.env.JWT_SECRET, {
+//     expiresIn: '30d',
+//   });
+//   res.cookie('token', token, {
+//     httpOnly: true,
+//     secure: process.env.NODE_ENV === 'production',
+//     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+//     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+//   });
+//   res.status(200).json({ message: 'Logged in', user: { id: user._id, email: user.email, isAdmin: user.isAdmin } });
+// });
+
+// Admin Login
+// const adminLogin = asyncHandler(async (req, res) => {
+//   const { email, password } = req.body;
+//   if (!email || !password) {
+//     res.status(400);
+//     throw new Error('Email and password are required');
+//   }
+
+//   const user = await User.findOne({ email });
+//   if (!user || !(await user.matchPassword(password)) || !user.isAdmin) {
+//     res.status(401);
+//     throw new Error('Invalid admin credentials');
+//   }
+
+//   const token = jwt.sign({ id: user._id, name: user.email, isAdmin: user.isAdmin }, process.env.JWT_SECRET, {
+//     expiresIn: '30d',
+//   });
+//   res.cookie('token', token, {
+//     httpOnly: true,
+//     secure: process.env.NODE_ENV === 'production',
+//     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+//     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+//   });
+//   res.status(200).json({ message: 'Admin logged in', user: { id: user._id, email: user.email, isAdmin: user.isAdmin } });
+// });
+
+// Logout User
+const logoutUser = asyncHandler(async (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  });
+  res.status(200).json({ message: 'Logged out' });
+});
+
+// Register User
+const registerUser = asyncHandler(async (req, res) => {
+  const { email, phone, password, disasterType, location, report } = req.body;
+
+  if (!email || !phone || !password || !disasterType || !location || !report || !req.file) {
+    return res.status(400).json({ message: 'All fields are required' });
+  }
+
+  let imageUrl = {};
   if (req.file) {
     try {
       imageUrl = await uploadImageToCloudinary(req.file.buffer);
     } catch (error) {
       return res
         .status(500)
-        .json({ message: "Image upload failed", error: error.message });
+        .json({ message: 'Image upload failed', error: error.message });
     }
   }
 
- 
   const user = new User({
     email,
     phone,
+    password,
     disasterType,
     location,
     report,
     image: imageUrl,
-    hasSubmittedReport: true, 
+    hasSubmittedReport: true,
+    isAdmin: false,
   });
 
   const savedUser = await user.save();
   res.status(201).json(savedUser);
 });
 
-
+// Get All Users (Reports)
 const getAllUsers = asyncHandler(async (req, res) => {
-  const users = await User.find().sort("-createdAt");
+  const { email } = req.query;
+  const query = email ? { email, hasSubmittedReport: true } : {};
+  const users = await User.find(query).sort('-createdAt');
 
   if (!users || users.length === 0) {
-    return res.status(404).json({ message: "No users found" });
+    return res.status(404).json({ message: 'No users found' });
   }
   res.status(200).json(users);
 });
+
 
 const getUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
 
   if (!user) {
-    return res.status(404).json({ message: "User not found" });
+    return res.status(404).json({ message: 'User not found' });
   }
   res.status(200).json(user);
 });
 
+// Get User Report
 const getUserReport = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
 
   if (!user) {
-    return res.status(404).json({ message: "User not found" });
+    return res.status(404).json({ message: 'User not found' });
   }
 
   const userReport = {
@@ -92,14 +187,15 @@ const getUserReport = asyncHandler(async (req, res) => {
     image: user.image,
   };
 
-  res.status(200).json(userReport); 
+  res.status(200).json(userReport);
 });
 
+// Update User Profile
 const updateUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
 
   if (!user) {
-    return res.status(404).json({ message: "User not found" });
+    return res.status(404).json({ message: 'User not found' });
   }
 
   user.email = req.body.email || user.email;
@@ -114,7 +210,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     } catch (error) {
       return res
         .status(500)
-        .json({ message: "Image upload failed", error: error.message });
+        .json({ message: 'Image upload failed', error: error.message });
     }
   }
 
@@ -122,23 +218,84 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   res.json(updatedUser);
 });
 
+// Delete User
 const deleteUser = asyncHandler(async (req, res) => {
   const userId = req.params.id;
 
   const user = await User.findById(userId);
   if (!user) {
-    return res.status(404).json({ message: "User not found" });
+    return res.status(404).json({ message: 'User not found' });
   }
 
   await user.deleteOne();
-  res.status(200).json({ message: "User deleted successfully!" });
+  res.status(200).json({ message: 'User deleted successfully!' });
+});
+
+// Get Comments for a Report
+const getComments = asyncHandler(async (req, res) => {
+  const { reportId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(reportId)) {
+    console.error(`Invalid report ID: ${reportId}`);
+    res.status(400);
+    throw new Error('Invalid report ID');
+  }
+
+  try {
+    const comments = await Comment.find({ reportId })
+      .sort({ createdAt: -1 })
+      .lean();
+    res.status(200).json(comments);
+  } catch (error) {
+    console.error(`Error fetching comments for reportId ${reportId}:`, error);
+    throw error;
+  }
+});
+
+// Post a New Comment
+const postComment = asyncHandler(async (req, res) => {
+  const { reportId, text } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(reportId)) {
+    console.error(`Invalid report ID: ${reportId}`);
+    res.status(400);
+    throw new Error('Invalid report ID');
+  }
+
+  if (!text?.trim()) {
+    res.status(400);
+    throw new Error('Comment text is required');
+  }
+
+  const report = await User.findById(reportId);
+  if (!report) {
+    console.error(`Report not found for reportId: ${reportId}`);
+    res.status(404);
+    throw new Error('Report not found');
+  }
+
+  const comment = new Comment({
+    reportId,
+    text: text.trim(),
+    author: req.user.name || 'Anonymous',
+  });
+
+  const savedComment = await comment.save();
+  res.status(201).json(savedComment);
 });
 
 module.exports = {
+  getCurrentUser,
+  // loginUser,
+  // adminLogin,
+  logoutUser,
   registerUser,
   getAllUsers,
   getUser,
   getUserReport,
   updateUserProfile,
   deleteUser,
+  getComments,
+  postComment,
+  authenticate,
 };
