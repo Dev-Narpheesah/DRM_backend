@@ -7,6 +7,7 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const corsOptions =require ('./config/corsOptions')
 
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -31,10 +32,11 @@ app.use(bodyParser.json());
 
 app.use("/api/user", require("./routes/userRoute"));
 app.use("/api/admin", require("./routes/adminRoute"));
-app.use("/api/disaster", require("./routes/disasterRoute"));
+
 
 app.use("/api/upload", require("./routes/uploadRoute"));
 
+app.use("/api/donations", require("./routes/paymentRoute"));
 
 
 const PORT = process.env.PORT || 4000;

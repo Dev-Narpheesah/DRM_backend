@@ -53,59 +53,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
   res.status(200).json({ id: user._id, email: user.email, isAdmin: user.isAdmin });
 });
 
-// Login User
-// const loginUser = asyncHandler(async (req, res) => {
-//   const { email, password } = req.body;
-//   if (!email || !password) {
-//     res.status(400);
-//     throw new Error('Email and password are required');
-//   }
 
-//   const user = await User.findOne({ email });
-//   if (!user || !(await user.matchPassword(password))) {
-//     res.status(401);
-//     throw new Error('Invalid credentials');
-//   }
-
-//   const token = jwt.sign({ id: user._id, name: user.email, isAdmin: user.isAdmin }, process.env.JWT_SECRET, {
-//     expiresIn: '30d',
-//   });
-//   res.cookie('token', token, {
-//     httpOnly: true,
-//     secure: process.env.NODE_ENV === 'production',
-//     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-//     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-//   });
-//   res.status(200).json({ message: 'Logged in', user: { id: user._id, email: user.email, isAdmin: user.isAdmin } });
-// });
-
-// Admin Login
-// const adminLogin = asyncHandler(async (req, res) => {
-//   const { email, password } = req.body;
-//   if (!email || !password) {
-//     res.status(400);
-//     throw new Error('Email and password are required');
-//   }
-
-//   const user = await User.findOne({ email });
-//   if (!user || !(await user.matchPassword(password)) || !user.isAdmin) {
-//     res.status(401);
-//     throw new Error('Invalid admin credentials');
-//   }
-
-//   const token = jwt.sign({ id: user._id, name: user.email, isAdmin: user.isAdmin }, process.env.JWT_SECRET, {
-//     expiresIn: '30d',
-//   });
-//   res.cookie('token', token, {
-//     httpOnly: true,
-//     secure: process.env.NODE_ENV === 'production',
-//     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-//     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-//   });
-//   res.status(200).json({ message: 'Admin logged in', user: { id: user._id, email: user.email, isAdmin: user.isAdmin } });
-// });
-
-// Logout User
 const logoutUser = asyncHandler(async (req, res) => {
   res.clearCookie('token', {
     httpOnly: true,
@@ -189,6 +137,8 @@ const getUserReport = asyncHandler(async (req, res) => {
 
   res.status(200).json(userReport);
 });
+
+
 
 // Update User Profile
 const updateUserProfile = asyncHandler(async (req, res) => {

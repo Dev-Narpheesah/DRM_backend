@@ -1,64 +1,79 @@
-const User = require("../models/UserModel");
-const bcrypt = require("bcrypt");
-const errorHandler = require('../utils/error');
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const asyncHandler = require("express-async-handler");
+const User = require("../models/User");
 
+// Register
+const registerUser = async (req, res) => {
+  const { username, email, phone, password } = req.body;
 
-const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '1d' });
-};
-
-const signup = asyncHandler(async (req, res, next) => {
-  const { username, email, password } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const newUser = new User({ username, email, password: hashedPassword });
+  if (!username || !email || !password) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
 
   try {
-    await newUser.save();
-    res.status(201).json("User created successfully");
-  } catch (error) {
-    next(errorHandler(550, "Already Registered"));
-  }
-});
+    const existing = await User.findOne({ email });
+    if (existing) {
+      return res.status(400).json({ message: "User already exists" });
+    }
 
-const signin = asyncHandler(async (req, res, next) => {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      username,
+      email,
+      phone,
+      password: hashedPassword,
+    });
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email, username: user.username, isAdmin: user.isAdmin },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.status(201).json({
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        isAdmin: user.isAdmin,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Login
+const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const validUser = await User.findOne({ email });
-    if (!validUser) return next(errorHandler(401, "User not found"));
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
-    const isValidPassword = await bcrypt.compare(password, validUser.password);
-    if (!isValidPassword) return next(errorHandler(401, "Wrong credentials"));
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(400).json({ message: "Invalid credentials" });
 
-    const token = generateToken(validUser._id);
+    const token = jwt.sign(
+      { id: user._id, email: user.email, username: user.username, isAdmin: user.isAdmin },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
-    res.status(200).json({
-      user: {
-        id: validUser._id,
-        username: validUser.username,
-        email: validUser.email,
-      },
+    res.json({
       token,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        isAdmin: user.isAdmin,
+      },
     });
   } catch (error) {
-    next(error);
+    res.status(500).json({ message: error.message });
   }
-});
+};
 
-const signOut = asyncHandler(async (req, res, next) => {
-  try {
-    res.clearCookie("access_token");
-    res.status(200).json("User has been logged out!");
-  } catch (error) {
-    next(error);
-  }
-});
-
-module.exports = { signup, signin, signOut };
-
-
-
-
-
+module.exports = { registerUser, loginUser };
