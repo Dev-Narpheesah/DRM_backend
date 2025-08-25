@@ -1,24 +1,22 @@
+// Middleware/authMiddleware.js
 const jwt = require("jsonwebtoken");
+const asyncHandler = require("express-async-handler");
 
-const authenticate = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "No token provided" });
+const authenticate = asyncHandler(async (req, res, next) => {
+  const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+  if (!token) {
+    res.status(401);
+    throw new Error("Authentication required");
   }
 
-  const token = authHeader.split(" ")[1];
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // { id, email, username, isAdmin }
+    req.user = decoded;
     next();
-  } catch (error) {
-    res.status(401).json({ message: "Invalid token" });
+  } catch (err) {
+    res.status(401);
+    throw new Error("Invalid or expired token");
   }
-};
+});
 
-const isAdmin = (req, res, next) => {
-  if (req.user && req.user.isAdmin) return next();
-  return res.status(403).json({ message: "Access denied. Not an admin." });
-};
-
-module.exports = { authenticate, isAdmin };
+module.exports = { authenticate };
