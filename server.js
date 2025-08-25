@@ -1,33 +1,31 @@
 require("dotenv").config();
 const express = require("express");
-const app = express();
-const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
-const cors = require("cors");
 const mongoose = require("mongoose");
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
+const bodyParser = require("body-parser");
 const corsOptions = require("./config/corsOptions");
-const http = require("http");
-const { Server } = require("socket.io");
-const allowedOrigins = require("./config/allowedOrigins");
 
+const app = express();
+
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-
-mongoose
-  .connect(process.env.MONGODB)
-  .then(() => console.log("Conneted to mongo db"))
-  .catch((err) => console.log(err));
-// Connect to database
-// connectDB();
-
-// Middleware
-app.use(cors(corsOptions));
 app.use(bodyParser.json());
+app.use(cors(corsOptions));
 
-// Define routes
+// Connect to MongoDB
+mongoose
+  .connect(process.env.MONGODB, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((err) => console.error("MongoDB connection error:", err));
 
-// app.use("/api/user", require("./routes/userRoute"));
+// Routes
+app.use("/api/user", require("./routes/userRoute"));
 app.use("/api/admin", require("./routes/adminRoute"));
 app.use("/api/reports", require("./routes/reportRoute"));
 app.use("/api/auth", require("./routes/authRoute"));
@@ -37,27 +35,10 @@ app.use("/api/likes", require("./routes/likeRoute"));
 app.use("/api/ratings", require("./routes/ratingRoute"));
 app.use("/api/comments", require("./routes/commentRoute"));
 
-// Create HTTP server and Socket.IO
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-    credentials: true,
-  },
-});
-
-// Expose io to controllers via app locals
-app.set("io", io);
-
-io.on("connection", (socket) => {
-  console.log("Socket connected:", socket.id);
-  socket.on("disconnect", () => {
-    console.log("Socket disconnected:", socket.id);
-  });
-});
-
+// Start server
 const PORT = process.env.PORT || 4000;
+
 mongoose.connection.once("open", () => {
-  console.log("database is connected");
-  server.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+  console.log("Database is connected");
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 });
