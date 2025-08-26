@@ -35,9 +35,24 @@
 const express = require("express");
 const router = express.Router();
 const { registerAdmin, loginAdmin } = require("../controllers/adminController");
+const { getAllUsers, getUserById, updateUserByAdmin, deleteUserByAdmin } = require("../controllers/userController");
+const { deleteReport, updateReport, getAllReports, getReport } = require("../controllers/reportController");
+const { authenticate, authorize } = require("../Middleware/authMiddleware");
 
 router.post("/register", registerAdmin);
 router.post("/login", loginAdmin);
+
+// Admin-only: Users
+router.get("/users", authenticate, authorize(["admin"]), getAllUsers);
+router.get("/users/:id", authenticate, authorize(["admin"]), getUserById);
+router.put("/users/:id", authenticate, authorize(["admin"]), updateUserByAdmin);
+router.delete("/users/:id", authenticate, authorize(["admin"]), deleteUserByAdmin);
+
+// Admin-only: Reports
+router.get("/reports", authenticate, authorize(["admin"]), getAllReports);
+router.get("/reports/:id", authenticate, authorize(["admin"]), getReport);
+router.put("/reports/:id", authenticate, authorize(["admin"]), updateReport);
+router.delete("/reports/:id", authenticate, authorize(["admin"]), deleteReport);
 
 module.exports = router;
 

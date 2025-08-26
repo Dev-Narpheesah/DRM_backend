@@ -66,7 +66,10 @@ const updateReport = asyncHandler(async (req, res) => {
   const report = await Report.findById(req.params.id);
   if (!report) return res.status(404).json({ message: "Report not found" });
 
-  if (report.user.toString() !== req.user.id) {
+  // allow owner or admin
+  const isOwner = report.user.toString() === req.user.id;
+  const isAdmin = req.user.role === "admin";
+  if (!isOwner && !isAdmin) {
     return res.status(403).json({ message: "Not authorized" });
   }
 
@@ -89,7 +92,10 @@ const deleteReport = asyncHandler(async (req, res) => {
   const report = await Report.findById(req.params.id);
   if (!report) return res.status(404).json({ message: "Report not found" });
 
-  if (report.user.toString() !== req.user.id) {
+  // allow owner or admin
+  const isOwner = report.user.toString() === req.user.id;
+  const isAdmin = req.user.role === "admin";
+  if (!isOwner && !isAdmin) {
     return res.status(403).json({ message: "Not authorized" });
   }
 
