@@ -31,9 +31,10 @@ exports.registerUser = async (req, res) => {
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ message: "All fields are required" });
+    if (!email || !password)
+      return res.status(400).json({ message: "All fields are required" });
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select("+password"); // include password
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const isMatch = await user.comparePassword(password);
@@ -44,7 +45,7 @@ exports.loginUser = async (req, res) => {
     res.status(200).json({
       message: "Login successful",
       user: { id: user._id, username: user.username, email: user.email },
-      token
+      token,
     });
   } catch (error) {
     console.error("Login error:", error);
