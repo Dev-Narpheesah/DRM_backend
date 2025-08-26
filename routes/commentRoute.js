@@ -1,16 +1,10 @@
 const express = require("express");
-const { authenticate } = require("../Middleware/authMiddleware");
-const {
-  getComments,
-  postComment,
-  deleteComment,
-} = require("../controllers/commentController");
-
 const router = express.Router();
+const { getComments, postComment, deleteComment } = require("../controllers/commentController");
+const {authenticate } = require("../Middleware/authMiddleware");
 
-// ================= COMMENTS =================
-router.get("/:reportId", getComments);
-router.post("/:reportId", authenticate, postComment);
-router.delete("/:commentId", authenticate, deleteComment);
+router.get("/:reportId", getComments); // public
+router.post("/:reportId", authenticate, postComment); // logged in
+router.delete("/:id", authenticate, deleteComment); // owner/admin
 
 module.exports = router;
