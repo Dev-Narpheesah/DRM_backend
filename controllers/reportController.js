@@ -15,8 +15,9 @@ cloudinary.config({
 const uploadImageToCloudinary = (fileBuffer) =>
   new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream((err, result) => {
-      if (err) reject(err);
-      else resolve({ url: result.secure_url, public_id: result.public_id });
+      if (err) return reject(err);
+      if (!result || !result.secure_url) return reject(new Error("Invalid Cloudinary response"));
+      return resolve({ url: result.secure_url, public_id: result.public_id });
     });
     streamifier.createReadStream(fileBuffer).pipe(stream);
   });
@@ -24,11 +25,25 @@ const uploadImageToCloudinary = (fileBuffer) =>
 // ====== REPORTS ======
 const createReport = asyncHandler(async (req, res) => {
   const { email, phone, disasterType, location, report } = req.body;
-  if (!email || !phone || !disasterType || !location || !report || !req.file) {
+  if (!email || !phone || !disasterType || !location || !report) {
     return res.status(400).json({ message: "All fields are required" });
   }
 
-  const image = await uploadImageToCloudinary(req.file.buffer);
+  if (!req.file || !req.file.buffer) {
+    return res.status(400).json({ message: "Image is required for report submission" });
+  }
+
+  if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+    return res.status(503).json({ message: "Image upload service is not configured. Please try again later." });
+  }
+
+  let image;
+  try {
+    image = await uploadImageToCloudinary(req.file.buffer);
+  } catch (err) {
+    console.error("Cloudinary upload failed:", err?.message || err);
+    return res.status(502).json({ message: "Image upload failed. Please retry in a moment." });
+  }
   const newReport = new Report({
     user: req.user.id,
     email,
