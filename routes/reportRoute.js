@@ -9,12 +9,13 @@ const {
   updateReport,
   deleteReport,
 } = require("../controllers/reportController");
-const { authenticate } = require("../Middleware/authMiddleware");
+const { authenticate, optionalAuthenticate } = require("../Middleware/authMiddleware");
 
 const router = express.Router();
 const upload = multer(); // handle multipart/form-data
 
-router.post("/", authenticate, upload.single("image"), createReport);
+// Allow either signed-in (with token) or anonymous submissions
+router.post("/", optionalAuthenticate, upload.single("image"), createReport);
 router.get("/my", authenticate, getUserReports);
 router.get("/", getAllReports);
 router.get("/:id", getReport);

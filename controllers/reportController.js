@@ -29,6 +29,8 @@ const createReport = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "All fields are required" });
   }
 
+  // disasterType now free-form string; no enum restriction
+
   if (!req.file || !req.file.buffer) {
     return res.status(400).json({ message: "Image is required for report submission" });
   }
@@ -45,7 +47,7 @@ const createReport = asyncHandler(async (req, res) => {
     return res.status(502).json({ message: "Image upload failed. Please retry in a moment." });
   }
   const newReport = new Report({
-    user: req.user.id,
+    user: req.user?.id || undefined,
     email,
     phone,
     disasterType,
@@ -62,7 +64,15 @@ const createReport = asyncHandler(async (req, res) => {
 });
 
 const getUserReports = asyncHandler(async (req, res) => {
-  const reports = await Report.find({ user: req.user.id }).populate("user", "username email");
+  // support querying by token user or by email param for flexibility
+  const emailFilter = req.query.email;
+  let filter = {};
+  if (emailFilter) {
+    filter.email = emailFilter;
+  } else {
+    filter.user = req.user.id;
+  }
+  const reports = await Report.find(filter).sort("-createdAt").populate("user", "username email");
   res.json(reports);
 });
 

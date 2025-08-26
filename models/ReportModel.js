@@ -5,7 +5,7 @@ const reportSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User", // links to User model
-      required: true,
+      required: false,
     },
     email: {
       type: String,
@@ -20,7 +20,7 @@ const reportSchema = new mongoose.Schema(
     disasterType: {
       type: String,
       required: true,
-      enum: ["Flood", "Earthquake", "Wildfire", "Hurricane", "Tornado", "Other"], // restrict to known disasters
+      trim: true,
     },
     location: {
       type: String,
