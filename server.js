@@ -31,6 +31,7 @@ app.use("/api/donations", require("./routes/paymentRoute"));
 app.use("/api/likes", require("./routes/likeRoute"));
 app.use("/api/ratings", require("./routes/ratingRoute"));
 app.use("/api/comments", require("./routes/commentRoute"));
+app.use("/api/notifications", require("./routes/notificationRoute"));
 
 // Start server
 const PORT = process.env.PORT || 4000;

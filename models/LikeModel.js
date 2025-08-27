@@ -15,6 +15,11 @@ const likeSchema = new mongoose.Schema({
     type: String, // for guests
     required: false,
   },
+  reactionType: {
+    type: String,
+    enum: ["like", "love", "care", "haha", "wow", "sad", "angry"],
+    default: "like",
+  },
   createdAt: {
     type: Date,
     default: Date.now,

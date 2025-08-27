@@ -16,7 +16,7 @@ const upload = multer(); // handle multipart/form-data
 
 // Allow either signed-in (with token) or anonymous submissions
 router.post("/", optionalAuthenticate, upload.single("image"), createReport);
-router.get("/my", authenticate, getUserReports);
+router.get("/my", getUserReports);
 router.get("/", getAllReports);
 router.get("/:id", getReport);
 router.put("/:id", authenticate, upload.single("image"), updateReport);
