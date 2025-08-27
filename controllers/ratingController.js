@@ -1,32 +1,16 @@
 const asyncHandler = require('express-async-handler');
 const Rating = require('../models/RatingModel');
-const jwt = require('jsonwebtoken');
-
-// Authentication middleware
-const authenticate = asyncHandler(async (req, res, next) => {
-  const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
-  if (!token) {
-    res.status(401);
-    throw new Error('Authentication required');
-  }
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    res.status(401);
-    throw new Error('Invalid or expired token');
-  }
-});
 
 // ⭐ Add or update rating
 const addRating = asyncHandler(async (req, res) => {
   const { reportId } = req.params;
-  const { rating } = req.body;
-  const userId = req.user.id || req.user._id;
+  const { rating, userId } = req.body; // ✅ allow userId from body for public users
 
   if (!rating || rating < 1 || rating > 5) {
     return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+  }
+  if (!userId) {
+    return res.status(400).json({ message: 'UserId is required' });
   }
 
   const existingRating = await Rating.findOne({ reportId, userId });
@@ -50,10 +34,10 @@ const addRating = asyncHandler(async (req, res) => {
 // ⭐ Get stats for a report
 const getRatingStats = asyncHandler(async (req, res) => {
   const { reportId } = req.params;
-  const userId = req.user.id || req.user._id;
+  const { userId } = req.query; // ✅ optional: check if current visitor rated
 
   const ratings = await Rating.find({ reportId });
-  const userRating = await Rating.findOne({ reportId, userId });
+  const userRating = userId ? await Rating.findOne({ reportId, userId }) : null;
 
   const totalRatings = ratings.length;
   const averageRating =
@@ -68,7 +52,7 @@ const getRatingStats = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     totalRatings,
-    averageRating: Math.round(averageRating * 10) / 10, // rounded to 1 decimal
+    averageRating: Math.round(averageRating * 10) / 10,
     ratingDistribution,
     userRating: userRating ? userRating.rating : null,
   });
@@ -77,15 +61,18 @@ const getRatingStats = asyncHandler(async (req, res) => {
 // ⭐ Admin: get all ratings
 const getReportRatings = asyncHandler(async (req, res) => {
   const { reportId } = req.params;
-
-  const ratings = await Rating.find({ reportId }).populate('userId', 'name email');
+  const ratings = await Rating.find({ reportId });
   res.status(200).json(ratings);
 });
 
 // ⭐ Delete rating
 const deleteRating = asyncHandler(async (req, res) => {
   const { reportId } = req.params;
-  const userId = req.user.id || req.user._id;
+  const { userId } = req.body; // ✅ allow frontend to pass userId
+
+  if (!userId) {
+    return res.status(400).json({ message: 'UserId required' });
+  }
 
   const deletedRating = await Rating.findOneAndDelete({ reportId, userId });
 
@@ -97,7 +84,6 @@ const deleteRating = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
-  authenticate,
   addRating,
   getRatingStats,
   getReportRatings,

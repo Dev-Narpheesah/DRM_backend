@@ -8,13 +8,13 @@ const {
 
 const router = express.Router();
 
-// Toggle like/unlike
-router.post("/:reportId/toggle", authenticate, toggleLike);
+// Public: Toggle like/unlike
+router.post("/:reportId/toggle", toggleLike);
 
-// Get like count + whether user liked
-router.get("/:reportId/count", authenticate, getLikeCount);
+// Public: Get like count + whether current session/user liked
+router.get("/:reportId/count", getLikeCount);
 
-// Get all likes for a report (admin)
+// Admin only: Get all likes for a report
 router.get("/:reportId", authenticate, getReportLikes);
 
 module.exports = router;

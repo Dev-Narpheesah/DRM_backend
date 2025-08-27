@@ -1,19 +1,22 @@
 const express = require('express');
 const router = express.Router();
 const {
-  authenticate,
   addRating,
   getRatingStats,
   getReportRatings,
   deleteRating,
 } = require('../controllers/ratingController');
 
-// User routes
-router.post('/:reportId', authenticate, addRating);
-router.get('/:reportId/stats', authenticate, getRatingStats);
-router.delete('/:reportId', authenticate, deleteRating);
+// ⭐ Anyone can rate
+router.post('/:reportId', addRating);
 
-// Admin route
-router.get('/:reportId/all', authenticate, getReportRatings);
+// ⭐ Anyone can view stats
+router.get('/:reportId/stats', getRatingStats);
+
+// ⭐ Admin only: see all ratings (optional, can add auth if you want)
+router.get('/:reportId/all', getReportRatings);
+
+// ⭐ Anyone can delete their own rating
+router.delete('/:reportId', deleteRating);
 
 module.exports = router;

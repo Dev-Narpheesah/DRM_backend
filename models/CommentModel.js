@@ -12,10 +12,15 @@ const commentSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    text: {
+      type: String,
+      required: true,
+      trim: true,
+    },
     parentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Comment",
-      default: null, // for threaded comments
+      default: null,
     },
   },
   { timestamps: true }
