@@ -4,6 +4,7 @@ const {
   toggleLike,
   getLikeCount,
   getReportLikes,
+  getReactionsDetail,
 } = require("../controllers/likeController");
 
 const router = express.Router();
@@ -16,5 +17,8 @@ router.get("/:reportId/count", getLikeCount);
 
 // Admin only: Get all likes for a report
 router.get("/:reportId", authenticate, getReportLikes);
+
+// Public: Reactions detail (user names)
+router.get("/:reportId/reactions", getReactionsDetail);
 
 module.exports = router;
