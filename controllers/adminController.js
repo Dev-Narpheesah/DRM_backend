@@ -18,14 +18,14 @@ exports.registerAdmin = async (req, res) => {
     const newAdmin = await Admin.create({ username, email, password });
 
     const token = jwt.sign(
-      { id: newAdmin._id },
+      { id: newAdmin._id, role: "admin" },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
     res.status(201).json({
       message: "Admin registered successfully",
-      user: { id: newAdmin._id, username: newAdmin.username, email: newAdmin.email },
+      user: { id: newAdmin._id, username: newAdmin.username, email: newAdmin.email, role: "admin" },
       token,
     });
   } catch (error) {
@@ -54,14 +54,14 @@ exports.loginAdmin = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: admin._id },
+      { id: admin._id, role: "admin" },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
     res.status(200).json({
       message: "Admin login successful",
-      user: { id: admin._id, username: admin.username, email: admin.email },
+      user: { id: admin._id, username: admin.username, email: admin.email, role: "admin" },
       token,
     });
   } catch (error) {
