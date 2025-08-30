@@ -6,6 +6,7 @@ const authenticate = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("Token decoded:", decoded);
     req.user = decoded;
     next();
   } catch (err) {
@@ -14,6 +15,12 @@ const authenticate = (req, res, next) => {
 };
 
 const authorize = (roles) => (req, res, next) => {
+  console.log("Authorization check:", { 
+    userRole: req.user.role, 
+    requiredRoles: roles, 
+    user: req.user 
+  });
+  
   if (!roles.includes(req.user.role)) {
     return res.status(403).json({ message: "Forbidden" });
   }
