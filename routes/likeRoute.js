@@ -1,5 +1,5 @@
 const express = require("express");
-const { authenticate } = require("../Middleware/authMiddleware");
+const { authenticate, authorize } = require("../Middleware/authMiddleware");
 const {
   toggleLike,
   getLikeCount,
@@ -16,7 +16,7 @@ router.post("/:reportId/toggle", toggleLike);
 router.get("/:reportId/count", getLikeCount);
 
 // Admin only: Get all likes for a report
-router.get("/:reportId", authenticate, getReportLikes);
+router.get("/:reportId", authenticate, authorize(["admin"]), getReportLikes);
 
 // Public: Reactions detail (user names)
 router.get("/:reportId/reactions", getReactionsDetail);
