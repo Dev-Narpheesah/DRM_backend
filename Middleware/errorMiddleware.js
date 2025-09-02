@@ -1,11 +1,9 @@
 const errorHandler = (err, req, res, next) => {
-  const stausCode = res.stausCode ? res.stausCode : 500;
-
-  res.status(stausCode);
-
+  const statusCode = res.statusCode && res.statusCode !== 200 ? res.statusCode : 500;
+  res.status(statusCode);
   res.json({
-    message: err.message,
-    stack: process.env.NODE_ENV === "development" ? err.stack : null,
+    message: err.message || 'Internal Server Error',
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
   });
 };
 
