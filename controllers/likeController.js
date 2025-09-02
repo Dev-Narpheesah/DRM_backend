@@ -122,7 +122,7 @@ const getReactionsDetail = asyncHandler(async (req, res) => {
 
   // Fetch up to 200 likes to limit payload
   const likes = await Like.find({ reportId: reportObjectId })
-    .populate("userId", "name email")
+    .populate("userId", "username email")
     .lean()
     .limit(200);
 
@@ -131,7 +131,7 @@ const getReactionsDetail = asyncHandler(async (req, res) => {
   };
   for (const l of likes) {
     const bucket = l.reactionType || 'like';
-    const displayName = l.userId?.name || l.userId?.email || (l.sessionId ? 'Guest' : 'Unknown');
+    const displayName = l.userId?.username || l.userId?.email || (l.sessionId ? 'Guest' : 'Unknown');
     result[bucket].push({
       id: (l.userId?._id || l.sessionId || l._id)?.toString(),
       name: displayName,
