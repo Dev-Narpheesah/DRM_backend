@@ -1,6 +1,20 @@
 const axios = require("axios");
 const Payment = require("../models/PaymentModel");
 
+// Get total donation amount
+exports.getTotalDonations = async (req, res) => {
+  try {
+    const result = await Payment.aggregate([
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+    const total = result.length > 0 ? result[0].total : 0;
+    res.json({ success: true, total });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Error fetching total donations" });
+  }
+};
+
+
 exports.verifyPayment = async (req, res) => {
   try {
     const { transaction_id, fullName, email, amount, message } = req.body;

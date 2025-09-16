@@ -1,3 +1,4 @@
+
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
@@ -32,6 +33,20 @@ app.use("/api/likes", require("./routes/likeRoute"));
 app.use("/api/ratings", require("./routes/ratingRoute"));
 app.use("/api/comments", require("./routes/commentRoute"));
 app.use("/api/notifications", require("./routes/notificationRoute"));
+app.use("/api/news", require("./routes/newsRoute"));
+app.use("/api/volunteer", require("./routes/volunteerRoute"));
+app.use("/api/stories", require("./routes/storyRoute"));
+app.use("/api/contact", require("./routes/contactRoute"));
+
+
+
+
+
+// Alternate API endpoints for flexibility
+app.use('/api/news', require('./api/news'));
+app.use('/api/volunteer', require('./api/volunteer'));
+app.use('/api/stories', require('./api/stories'));
+app.use('/api/contact', require('./api/contact'));
 
 // Start server
 const PORT = process.env.PORT || 4000;
